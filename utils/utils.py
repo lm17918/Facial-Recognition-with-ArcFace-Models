@@ -1,6 +1,8 @@
 from torchvision import datasets, models, transforms
 import torch
 import torch.nn as nn
+from sklearn.metrics import auc, roc_curve
+import numpy as np
 
 
 def dataset_setup(data_dir):
@@ -49,3 +51,41 @@ def extract_features(image, model, device):
         image = image.to(device)
         features = model(image)
         return features.cpu().numpy()
+
+
+def calculate_metrics(impostor_distances, genuine_distances):
+    # Calculate FAR and FRR for different thresholds
+    thresholds = np.logspace(-9, 0, 50)
+    far_values = []
+    frr_values = []
+
+    for threshold in thresholds:
+        false_accepts = sum(1 for d in impostor_distances if d < threshold)
+        far = false_accepts / len(impostor_distances)
+
+        false_rejects = sum(1 for d in genuine_distances if d >= threshold)
+        frr = false_rejects / len(genuine_distances)
+
+        far_values.append(far)
+        frr_values.append(frr)
+
+    # Calculate Equal Error Rate (EER)
+    eer_threshold = thresholds[
+        np.nanargmin(np.abs(np.array(far_values) - np.array(frr_values)))
+    ]
+    eer = (
+        far_values[np.nanargmin(np.abs(np.array(far_values) - np.array(frr_values)))]
+        + frr_values[np.nanargmin(np.abs(np.array(far_values) - np.array(frr_values)))]
+    ) / 2.0
+
+    print(f"Equal Error Rate (EER): {eer:.4f} at threshold: {eer_threshold:.4e}")
+
+    # Calculate ROC curve
+    total_impostor_pairs = len(impostor_distances)
+    total_genuine_pairs = len(genuine_distances)
+    fpr, tpr, _ = roc_curve(
+        [0] * total_impostor_pairs + [1] * total_genuine_pairs,
+        impostor_distances + genuine_distances,
+    )
+    roc_auc = auc(fpr, tpr)
+    return thresholds, far_values, frr_values, roc_auc, eer_threshold, eer
