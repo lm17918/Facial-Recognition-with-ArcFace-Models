@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import auc, roc_curve
 import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 def dataset_setup(data_dir):
@@ -42,7 +43,7 @@ def model_setup(device, save_path):
 
 
 # Function to extract features from a single image
-def extract_features(image, model, device):
+def _extract_features(image, model, device):
     # Add batch dimension if the image tensor doesn't have it
     if image.dim() == 3:
         image = image.unsqueeze(0)  # Add batch dimension
@@ -89,3 +90,31 @@ def calculate_metrics(impostor_distances, genuine_distances):
     )
     roc_auc = auc(fpr, tpr)
     return thresholds, far_values, frr_values, roc_auc, eer_threshold, eer
+
+
+def one_to_one_comparison(test_dataloader, model, device, test_dataset):
+    # Initialize lists to store genuine and impostor distances
+    genuine_distances = []
+    impostor_distances = []
+
+    # Iterate over the test dataset to create pairs
+    for i, (image, label) in enumerate(test_dataloader):
+        if i % 2 == 0:
+            # First image in the pair (genuine pair)
+            image1 = image
+        else:
+            # Second image in the pair (genuine pair)
+            image2 = image
+            # Extract features for genuine pair
+            genuine_features1 = _extract_features(image1, model, device)
+            genuine_features2 = _extract_features(image2, model, device)
+            genuine_distance = cosine_similarity(genuine_features1, genuine_features2)
+            genuine_distances.append(genuine_distance.item())
+
+            # Pair with a random different person's image (impostor pair)
+            random_idx = np.random.randint(len(test_dataset))
+            impostor_image, _ = test_dataset[random_idx]
+            impostor_features = _extract_features(impostor_image, model, device)
+            impostor_distance = cosine_similarity(genuine_features1, impostor_features)
+            impostor_distances.append(impostor_distance.item())
+    return genuine_distances, impostor_distances
