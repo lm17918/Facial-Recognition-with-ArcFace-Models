@@ -2,7 +2,14 @@ import matplotlib.pyplot as plt
 
 
 def plot_results(
-    thresholds, far_values, frr_values, roc_auc, genuine_distances, impostor_distances
+    thresholds,
+    far_values,
+    frr_values,
+    roc_auc,
+    genuine_distances,
+    impostor_distances,
+    eer_threshold,
+    eer,
 ):
     # Plot FAR and FRR vs. Threshold
     plt.figure(figsize=(12, 6))
@@ -72,6 +79,28 @@ def plot_results(
 
     # Add legend
     plt.legend()
-
+    # Plot EER vs. distance threshold
+    plt.figure(figsize=(6, 6))
+    plt.plot(thresholds, far_values, color="blue", label="FAR")
+    plt.plot(thresholds, frr_values, color="red", label="FRR")
+    plt.plot(
+        [eer_threshold],
+        [eer],
+        marker="o",
+        markersize=8,
+        color="green",
+        label=f"EER ({eer:.2f})",
+    )
+    plt.axvline(
+        x=eer_threshold,
+        color="gray",
+        linestyle="--",
+        label=f"EER Threshold: {eer_threshold:.2f}",
+    )
+    plt.xscale("log")
+    plt.xlabel("Distance Threshold")
+    plt.ylabel("Error Rates")
+    plt.title("EER vs. Distance Threshold")
+    plt.legend()
     # Show the plot
     plt.show()

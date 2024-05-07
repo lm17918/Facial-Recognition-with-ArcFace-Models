@@ -46,7 +46,7 @@ for i, (image, label) in enumerate(test_dataloader):
         impostor_distance = cosine_similarity(genuine_features1, impostor_features)
         impostor_distances.append(impostor_distance.item())
 # Calculate FAR and FRR for different thresholds
-thresholds = np.logspace(-7, 0, 100)
+thresholds = np.logspace(-9, 0, 50)
 far_values = []
 frr_values = []
 
@@ -81,5 +81,12 @@ fpr, tpr, _ = roc_curve(
 roc_auc = auc(fpr, tpr)
 
 plot_results(
-    thresholds, far_values, frr_values, roc_auc, genuine_distances, impostor_distances
+    thresholds,
+    far_values,
+    frr_values,
+    roc_auc,
+    genuine_distances,
+    impostor_distances,
+    eer_threshold,
+    eer,
 )
