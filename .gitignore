@@ -34,3 +34,4 @@ venv/
 .env/
 
 data/
+weights/
