@@ -8,7 +8,7 @@ from collections import defaultdict
 import tqdm
 
 
-def dataset_setup(data_dir):
+def dataset_setup(data_dir, model, device):
     # Define transforms for test dataset
     transforms_test = transforms.Compose(
         [
@@ -18,14 +18,24 @@ def dataset_setup(data_dir):
         ]
     )
 
-    # Path to your dataset
-    data_dir = "./data/identity_dataset/test"
-
     # Load test dataset
     test_dataset = datasets.ImageFolder(data_dir, transforms_test)
+
+    # Create a new dataset with preprocessed images
+    preprocessed_data = []
+    i = 0
+    for image, label in tqdm.tqdm(test_dataset):
+        if i > 400:
+            break
+        i += 1
+        preprocessed_image = _extract_features(image, model, device)
+        preprocessed_data.append((preprocessed_image, label))
+
+    # Create a DataLoader for the preprocessed dataset
     test_dataloader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=1, shuffle=False
+        preprocessed_data, batch_size=1, shuffle=False
     )
+
     return test_dataset, test_dataloader
 
 
@@ -93,7 +103,7 @@ def calculate_metrics(thresholds, impostor_distances, genuine_distances):
     return far_values, frr_values, roc_auc, eer_threshold, eer
 
 
-def one_to_many_comparison(test_dataloader, model, device, test_dataset):
+def one_to_many_comparison(test_dataloader):
     # Initialize lists to store genuine and impostor distances
     genuine_distances = []
     impostor_distances = []
@@ -106,38 +116,24 @@ def one_to_many_comparison(test_dataloader, model, device, test_dataset):
 
     all_labels = sorted(label_images.keys())
 
-    for label in tqdm.tqdm(all_labels, leave=True, desc="General loop"):
-        if label > 10:  # just for tests
-            continue  # just for tests
+    for label in tqdm.tqdm(all_labels, leave=True, desc="General loop one to many"):
         len_imgs = len(label_images[label])
         for i in range(len_imgs):
-            if i > 3:  # Custom to make the code faster for debug
-                continue
-            single_feature = _extract_features(label_images[label][i], model, device)
-
+            single_feature = label_images[label][i]
             similarity_list = []
             for j in tqdm.tqdm(range(len_imgs), leave=False, desc="Genuine distance"):
                 if i != j:  # Skip comparing the image with itself
-                    feature = _extract_features(label_images[label][j], model, device)
-
+                    feature = label_images[label][j]
                     similarity_list.append(cosine_similarity(single_feature, feature))
             genuine_distances.append(np.average(similarity_list))
 
-            m = 0  # just for tests
             for other_label in tqdm.tqdm(
                 all_labels, leave=False, desc="Impostor distance"
             ):
-                if m > 2:  # just for tests
-                    continue  # just for tests
-                m += 1  # just for tests
                 if other_label != label:
-                    k = 0  # just for tests
                     similarity_list = []
                     for img in label_images[other_label]:
-                        k += 1  # just for tests
-                        if k > 2:  # just for tests
-                            continue  # just for tests
-                        feature = _extract_features(img, model, device)
+                        feature = img
                         similarity_list.append(
                             cosine_similarity(single_feature, feature)
                         )
@@ -146,29 +142,48 @@ def one_to_many_comparison(test_dataloader, model, device, test_dataset):
     return genuine_distances, impostor_distances
 
 
-def one_to_one_comparison(test_dataloader, model, device, test_dataset):
+def one_to_one_comparison(test_dataloader):
     # Initialize lists to store genuine and impostor distances
     genuine_distances = []
     impostor_distances = []
 
-    # Iterate over the test dataset to create pairs
-    for i, (image, label) in enumerate(test_dataloader):
-        if i % 2 == 0:
-            # First image in the pair (genuine pair)
-            image1 = image
-        else:
-            # Second image in the pair (genuine pair)
-            image2 = image
-            # Extract features for genuine pair
-            genuine_features1 = _extract_features(image1, model, device)
-            genuine_features2 = _extract_features(image2, model, device)
-            genuine_distance = cosine_similarity(genuine_features1, genuine_features2)
-            genuine_distances.append(genuine_distance.item())
+    # Prepare label-wise image dictionary
+    label_images = defaultdict(list)
 
-            # Pair with a random different person's image (impostor pair)
-            random_idx = np.random.randint(len(test_dataset))
-            impostor_image, _ = test_dataset[random_idx]
-            impostor_features = _extract_features(impostor_image, model, device)
-            impostor_distance = cosine_similarity(genuine_features1, impostor_features)
-            impostor_distances.append(impostor_distance.item())
+    # Iterate through the dataset and group images by labels
+    for images, labels in test_dataloader:
+        for img, label in zip(images, labels):
+            label_images[label.item()].append(img)
+
+    # Get all unique labels
+    all_labels = sorted(label_images.keys())
+
+    # Compute distances for genuine pairs (within the same label)
+    for label in tqdm.tqdm(all_labels, leave=True, desc="Genuine Distances one to one"):
+        images = label_images[label]
+        num_images = len(images)
+
+        for i in range(num_images):
+            for j in range(i + 1, num_images):  # Compare each pair (i, j) where i < j
+                feature_i = images[i]
+                feature_j = images[j]
+                similarity = cosine_similarity(feature_i, feature_j)
+                genuine_distances.append(similarity.item())
+
+    # Compute distances for impostor pairs (across different labels)
+    for i in tqdm.tqdm(
+        range(len(all_labels)), leave=True, desc="Impostor Distances one to one"
+    ):
+        for j in range(i + 1, len(all_labels)):  # Compare each pair (i, j) where i < j
+            label_i = all_labels[i]
+            label_j = all_labels[j]
+
+            images_i = label_images[label_i]
+            images_j = label_images[label_j]
+
+            for img_i in images_i:
+                for img_j in images_j:
+                    similarity = cosine_similarity(img_i, img_j)
+                    impostor_distances.append(similarity.item())
+
     return genuine_distances, impostor_distances

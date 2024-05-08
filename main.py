@@ -17,16 +17,16 @@ save_path = (
     "./weights/facial_identity_classification_transfer_learning_with_ResNet18.pth"
 )
 thresholds = np.logspace(-7, 0, 10)
-
-test_dataset, test_dataloader = dataset_setup(data_dir)
 model = model_setup(device, save_path)
 model.eval()
+test_dataset, test_dataloader = dataset_setup(data_dir, model, device)
+
 one_to_many_genuine_distances, one_to_many_impostor_distances = one_to_many_comparison(
-    test_dataloader, model, device, test_dataset
+    test_dataloader
 )
 
 one_to_one_genuine_distances, one_to_one_impostor_distances = one_to_one_comparison(
-    test_dataloader, model, device, test_dataset
+    test_dataloader
 )
 
 
