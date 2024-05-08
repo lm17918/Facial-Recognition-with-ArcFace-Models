@@ -4,6 +4,7 @@ import torch.nn as nn
 from sklearn.metrics import auc, roc_curve
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from collections import defaultdict
 
 
 def dataset_setup(data_dir):
@@ -90,6 +91,45 @@ def calculate_metrics(impostor_distances, genuine_distances):
     )
     roc_auc = auc(fpr, tpr)
     return thresholds, far_values, frr_values, roc_auc, eer_threshold, eer
+
+
+def one_to_many_comparison(test_dataloader, model, device, test_dataset):
+    # Initialize lists to store genuine and impostor distances
+    genuine_distances = []
+    impostor_distances = []
+    label_images = defaultdict(list)
+
+    # Iterate through the dataset
+    for images, labels in test_dataloader:
+        for img, label in zip(images, labels):
+            label_images[label.item()].append(img)
+
+    all_labels = sorted(label_images.keys())
+
+    for label in all_labels:
+        len_imgs = len(label_images[label])
+        for i in range(len_imgs):
+            single_feature = _extract_features(label_images[label][i], model, device)
+
+            similarity_list = []
+            for j in range(len_imgs):
+                if i != j:  # Skip comparing the image with itself
+                    feature = _extract_features(label_images[label][j], model, device)
+
+                    similarity_list.append(cosine_similarity(single_feature, feature))
+            genuine_distances.append(np.average(similarity_list))
+
+            for other_label in all_labels:
+                if other_label != label:
+                    similarity_list = []
+                    for img in label_images[other_label]:
+                        feature = _extract_features(img, model, device)
+                        similarity_list.append(
+                            cosine_similarity(single_feature, feature)
+                        )
+                    impostor_distances.append(np.average(similarity_list))
+
+    return genuine_distances, impostor_distances
 
 
 def one_to_one_comparison(test_dataloader, model, device, test_dataset):

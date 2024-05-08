@@ -5,6 +5,7 @@ from utils.utils import (
     model_setup,
     calculate_metrics,
     one_to_one_comparison,
+    one_to_many_comparison,
 )
 from utils.utils_plots import plot_results
 
@@ -21,7 +22,7 @@ test_dataset, test_dataloader = dataset_setup(data_dir)
 model = model_setup(device, save_path)
 model.eval()
 
-genuine_distances, impostor_distances = one_to_one_comparison(
+genuine_distances, impostor_distances = one_to_many_comparison(
     test_dataloader, model, device, test_dataset
 )
 
