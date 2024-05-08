@@ -36,7 +36,7 @@ def dataset_setup(data_dir, model, device):
         preprocessed_data, batch_size=1, shuffle=False
     )
 
-    return test_dataset, test_dataloader
+    return test_dataloader
 
 
 def model_setup(device, save_path):
