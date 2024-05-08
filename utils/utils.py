@@ -5,6 +5,7 @@ from sklearn.metrics import auc, roc_curve
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict
+import tqdm
 
 
 def dataset_setup(data_dir):
@@ -23,7 +24,7 @@ def dataset_setup(data_dir):
     # Load test dataset
     test_dataset = datasets.ImageFolder(data_dir, transforms_test)
     test_dataloader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=1, shuffle=False, num_workers=2
+        test_dataset, batch_size=1, shuffle=False
     )
     return test_dataset, test_dataloader
 
@@ -55,9 +56,8 @@ def _extract_features(image, model, device):
         return features.cpu().numpy()
 
 
-def calculate_metrics(impostor_distances, genuine_distances):
+def calculate_metrics(thresholds, impostor_distances, genuine_distances):
     # Calculate FAR and FRR for different thresholds
-    thresholds = np.logspace(-9, 0, 50)
     far_values = []
     frr_values = []
 
@@ -90,7 +90,7 @@ def calculate_metrics(impostor_distances, genuine_distances):
         impostor_distances + genuine_distances,
     )
     roc_auc = auc(fpr, tpr)
-    return thresholds, far_values, frr_values, roc_auc, eer_threshold, eer
+    return far_values, frr_values, roc_auc, eer_threshold, eer
 
 
 def one_to_many_comparison(test_dataloader, model, device, test_dataset):
@@ -106,23 +106,37 @@ def one_to_many_comparison(test_dataloader, model, device, test_dataset):
 
     all_labels = sorted(label_images.keys())
 
-    for label in all_labels:
+    for label in tqdm.tqdm(all_labels, leave=True, desc="General loop"):
+        if label > 10:  # just for tests
+            continue  # just for tests
         len_imgs = len(label_images[label])
         for i in range(len_imgs):
+            if i > 3:  # Custom to make the code faster for debug
+                continue
             single_feature = _extract_features(label_images[label][i], model, device)
 
             similarity_list = []
-            for j in range(len_imgs):
+            for j in tqdm.tqdm(range(len_imgs), leave=False, desc="Genuine distance"):
                 if i != j:  # Skip comparing the image with itself
                     feature = _extract_features(label_images[label][j], model, device)
 
                     similarity_list.append(cosine_similarity(single_feature, feature))
             genuine_distances.append(np.average(similarity_list))
 
-            for other_label in all_labels:
+            m = 0  # just for tests
+            for other_label in tqdm.tqdm(
+                all_labels, leave=False, desc="Impostor distance"
+            ):
+                if m > 2:  # just for tests
+                    continue  # just for tests
+                m += 1  # just for tests
                 if other_label != label:
+                    k = 0  # just for tests
                     similarity_list = []
                     for img in label_images[other_label]:
+                        k += 1  # just for tests
+                        if k > 2:  # just for tests
+                            continue  # just for tests
                         feature = _extract_features(img, model, device)
                         similarity_list.append(
                             cosine_similarity(single_feature, feature)

@@ -3,104 +3,184 @@ import matplotlib.pyplot as plt
 
 def plot_results(
     thresholds,
-    far_values,
-    frr_values,
-    roc_auc,
-    genuine_distances,
-    impostor_distances,
-    eer_threshold,
-    eer,
+    one_to_one_far_values,
+    one_to_one_frr_values,
+    one_to_one_roc_auc,
+    one_to_one_impostor_distances,
+    one_to_one_genuine_distances,
+    one_to_one_eer_threshold,
+    one_to_one_eer,
+    one_to_many_far_values,
+    one_to_many_frr_values,
+    one_to_many_roc_auc,
+    one_to_many_impostor_distances,
+    one_to_many_genuine_distances,
+    one_to_many_eer_threshold,
+    one_to_many_eer,
 ):
-    # Plot FAR and FRR vs. Threshold
-    plt.figure(figsize=(12, 6))
+    # Create a single figure with multiple subplots
+    fig, axs = plt.subplots(3, 2, figsize=(18, 18))
 
-    # Plot FAR vs. distance threshold
-    plt.subplot(1, 2, 1)
-    plt.plot(thresholds, far_values, color="blue", label="FAR")
-    plt.xscale("log")
-    plt.xlabel("Distance Threshold")
-    plt.ylabel("False Acceptance Rate (FAR)")
-    plt.title("FAR vs. Distance Threshold")
-    plt.legend()
+    # Plot FAR vs. distance threshold for both scenarios
+    axs[0, 0].plot(
+        thresholds, one_to_one_far_values, color="blue", label="FAR (One-to-One)"
+    )
+    axs[0, 0].plot(
+        thresholds,
+        one_to_many_far_values,
+        color="green",
+        linestyle="--",
+        label="FAR (One-to-Many)",
+    )
+    axs[0, 0].set_xscale("log")
+    axs[0, 0].set_xlabel("Distance Threshold")
+    axs[0, 0].set_ylabel("False Acceptance Rate (FAR)")
+    axs[0, 0].set_title("FAR vs. Distance Threshold")
+    axs[0, 0].legend()
 
-    # Plot FRR vs. distance threshold
-    plt.subplot(1, 2, 2)
-    plt.plot(thresholds, frr_values, color="red", label="FRR")
-    plt.xscale("log")
-    plt.xlabel("Distance Threshold")
-    plt.ylabel("False Rejection Rate (FRR)")
-    plt.title("FRR vs. Distance Threshold")
-    plt.legend()
+    # Plot FRR vs. distance threshold for both scenarios
+    axs[0, 1].plot(
+        thresholds, one_to_one_frr_values, color="red", label="FRR (One-to-One)"
+    )
+    axs[0, 1].plot(
+        thresholds,
+        one_to_many_frr_values,
+        color="orange",
+        linestyle="--",
+        label="FRR (One-to-Many)",
+    )
+    axs[0, 1].set_xscale("log")
+    axs[0, 1].set_xlabel("Distance Threshold")
+    axs[0, 1].set_ylabel("False Rejection Rate (FRR)")
+    axs[0, 1].set_title("FRR vs. Distance Threshold")
+    axs[0, 1].legend()
 
-    # Plot ROC curve
-    plt.figure(figsize=(6, 6))
-    plt.plot(
-        frr_values,
-        far_values,
+    # Plot ROC curve for both scenarios
+    axs[1, 0].plot(
+        one_to_one_frr_values,
+        one_to_one_far_values,
         color="darkorange",
         lw=2,
-        label=f"ROC curve (AUC = {roc_auc:.2f})",
+        label=f"ROC curve (One-to-One AUC = {one_to_one_roc_auc:.2f})",
     )
-    plt.plot([0, 1], [0, 1], color="navy", lw=1, linestyle="--")
-    plt.xlabel("False Rejection Rate (FRR)")
-    plt.ylabel("False Acceptance Rate (FAR)")
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.title("Receiver Operating Characteristic (ROC) Curve")
-    plt.legend(loc="lower right")
-    plt.grid(True)
-    # Plot Distance distributions for System 1
-    plt.figure(figsize=(8, 6))
+    axs[1, 0].plot(
+        one_to_many_frr_values,
+        one_to_many_far_values,
+        color="green",
+        lw=2,
+        linestyle="--",
+        label=f"ROC curve (One-to-Many AUC = {one_to_many_roc_auc:.2f})",
+    )
+    axs[1, 0].plot([0, 1], [0, 1], color="navy", lw=1, linestyle="--")
+    axs[1, 0].set_xlabel("False Rejection Rate (FRR)")
+    axs[1, 0].set_ylabel("False Acceptance Rate (FAR)")
+    # axs[1, 0].set_xscale("log")
+    # axs[1, 0].set_yscale("log")
+    axs[1, 0].set_title("Receiver Operating Characteristic (ROC) Curve")
+    axs[1, 0].legend(loc="lower right")
+    axs[1, 0].grid(True)
 
-    # Plot histogram for genuine distances
-    plt.hist(
-        genuine_distances,
+    # Plot Distance distributions for System 1 (One-to-One)
+    axs[1, 1].hist(
+        one_to_one_genuine_distances,
         bins=50,
         density=True,
         alpha=0.5,
         color="blue",
-        label="Genuine",
+        label="Genuine (One-to-One)",
     )
-
-    # Plot histogram for impostor distances
-    plt.hist(
-        impostor_distances,
+    axs[1, 1].hist(
+        one_to_one_impostor_distances,
         bins=50,
         density=True,
         alpha=0.5,
         color="red",
-        label="Impostor",
+        label="Impostor (One-to-One)",
     )
+    axs[1, 1].set_xlabel("Distance")
+    axs[1, 1].set_ylabel("Percentage of Samples")
+    axs[1, 1].set_title("Distance Distribution - One-to-One System")
+    axs[1, 1].legend()
 
-    # Set labels and title
-    plt.xlabel("Distance")
-    plt.ylabel("Percentage of Samples")
-    plt.title("Distance Distribution - System 1")
+    # Plot Distance distributions for System 2 (One-to-Many)
+    axs[2, 1].hist(
+        one_to_many_genuine_distances,
+        bins=50,
+        density=True,
+        alpha=0.5,
+        color="green",
+        label="Genuine (One-to-Many)",
+    )
+    axs[2, 1].hist(
+        one_to_many_impostor_distances,
+        bins=50,
+        density=True,
+        alpha=0.5,
+        color="orange",
+        label="Impostor (One-to-Many)",
+    )
+    axs[2, 1].set_xlabel("Distance")
+    axs[2, 1].set_ylabel("Percentage of Samples")
+    axs[2, 1].set_title("Distance Distribution - One-to-Many System")
+    axs[2, 1].legend()
 
-    # Add legend
-    plt.legend()
-    # Plot EER vs. distance threshold
-    plt.figure(figsize=(6, 6))
-    plt.plot(thresholds, far_values, color="blue", label="FAR")
-    plt.plot(thresholds, frr_values, color="red", label="FRR")
-    plt.plot(
-        [eer_threshold],
-        [eer],
+    # Plot EER vs. distance threshold for both scenarios
+    axs[2, 0].plot(
+        thresholds, one_to_one_far_values, color="blue", label="FAR (One-to-One)"
+    )
+    axs[2, 0].plot(
+        thresholds, one_to_one_frr_values, color="red", label="FRR (One-to-One)"
+    )
+    axs[2, 0].plot(
+        [one_to_one_eer_threshold],
+        [one_to_one_eer],
         marker="o",
         markersize=8,
         color="green",
-        label=f"EER ({eer:.2f})",
+        label=f"EER (One-to-One) = {one_to_one_eer:.2f}",
     )
-    plt.axvline(
-        x=eer_threshold,
+    axs[2, 0].axvline(
+        x=one_to_one_eer_threshold,
         color="gray",
         linestyle="--",
-        label=f"EER Threshold: {eer_threshold:.2f}",
+        label=f"EER Threshold (One-to-One): {one_to_one_eer_threshold:.2f}",
     )
-    plt.xscale("log")
-    plt.xlabel("Distance Threshold")
-    plt.ylabel("Error Rates")
-    plt.title("EER vs. Distance Threshold")
-    plt.legend()
-    # Show the plot
+    axs[2, 0].plot(
+        thresholds,
+        one_to_many_far_values,
+        color="purple",
+        linestyle="--",
+        label="FAR (One-to-Many)",
+    )
+    axs[2, 0].plot(
+        thresholds,
+        one_to_many_frr_values,
+        color="orange",
+        linestyle="--",
+        label="FRR (One-to-Many)",
+    )
+    axs[2, 0].plot(
+        [one_to_many_eer_threshold],
+        [one_to_many_eer],
+        marker="o",
+        markersize=8,
+        color="brown",
+        label=f"EER (One-to-Many) = {one_to_many_eer:.2f}",
+    )
+    axs[2, 0].axvline(
+        x=one_to_many_eer_threshold,
+        color="black",
+        linestyle="--",
+        label=f"EER Threshold (One-to-Many): {one_to_many_eer_threshold:.2f}",
+    )
+    axs[2, 0].set_xscale("log")
+    axs[2, 0].set_xlabel("Distance Threshold")
+    axs[2, 0].set_ylabel("Error Rates")
+    axs[2, 0].set_title("EER vs. Distance Threshold")
+    axs[2, 0].legend()
+
+    # Adjust layout
+    # plt.tight_layout()
+
+    # Show the combined plot
     plt.show()

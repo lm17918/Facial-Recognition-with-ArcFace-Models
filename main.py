@@ -1,5 +1,5 @@
 import torch
-
+import numpy as np
 from utils.utils import (
     dataset_setup,
     model_setup,
@@ -16,27 +16,53 @@ data_dir = "./data/identity_dataset/test"
 save_path = (
     "./weights/facial_identity_classification_transfer_learning_with_ResNet18.pth"
 )
-
+thresholds = np.logspace(-7, 0, 10)
 
 test_dataset, test_dataloader = dataset_setup(data_dir)
 model = model_setup(device, save_path)
 model.eval()
-
-genuine_distances, impostor_distances = one_to_many_comparison(
+one_to_many_genuine_distances, one_to_many_impostor_distances = one_to_many_comparison(
     test_dataloader, model, device, test_dataset
 )
 
-thresholds, far_values, frr_values, roc_auc, eer_threshold, eer = calculate_metrics(
-    impostor_distances, genuine_distances
+one_to_one_genuine_distances, one_to_one_impostor_distances = one_to_one_comparison(
+    test_dataloader, model, device, test_dataset
+)
+
+
+(
+    one_to_one_far_values,
+    one_to_one_frr_values,
+    one_to_one_roc_auc,
+    one_to_one_eer_threshold,
+    one_to_one_eer,
+) = calculate_metrics(
+    thresholds, one_to_one_impostor_distances, one_to_one_genuine_distances
+)
+(
+    one_to_many_far_values,
+    one_to_many_frr_values,
+    one_to_many_roc_auc,
+    one_to_many_eer_threshold,
+    one_to_many_eer,
+) = calculate_metrics(
+    thresholds, one_to_many_impostor_distances, one_to_many_genuine_distances
 )
 
 plot_results(
     thresholds,
-    far_values,
-    frr_values,
-    roc_auc,
-    genuine_distances,
-    impostor_distances,
-    eer_threshold,
-    eer,
+    one_to_one_far_values,
+    one_to_one_frr_values,
+    one_to_one_roc_auc,
+    one_to_one_impostor_distances,
+    one_to_one_genuine_distances,
+    one_to_one_eer_threshold,
+    one_to_one_eer,
+    one_to_many_far_values,
+    one_to_many_frr_values,
+    one_to_many_roc_auc,
+    one_to_many_impostor_distances,
+    one_to_many_genuine_distances,
+    one_to_many_eer_threshold,
+    one_to_many_eer,
 )
