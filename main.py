@@ -7,6 +7,8 @@ from utils.utils import (
     model_setup,
     one_to_many_comparison,
     one_to_one_comparison,
+    OneToOneMetrics,
+    OneToManyMetrics,
 )
 from utils.utils_plots import plot_results
 
@@ -61,24 +63,29 @@ def main():
         thresholds, one_to_many_impostor_distances, one_to_many_genuine_distances
     )
 
-    # Plot results
-    plot_results(
-        thresholds,
+    one_to_one_metrics = OneToOneMetrics(
         one_to_one_far_values,
         one_to_one_frr_values,
         one_to_one_roc_auc,
-        one_to_one_impostor_distances,
-        one_to_one_genuine_distances,
         one_to_one_eer_threshold,
         one_to_one_eer,
+        one_to_one_impostor_distances,
+        one_to_one_genuine_distances,
+    )
+
+    # Calculate metrics for one-to-many comparison
+    one_to_many_metrics = OneToManyMetrics(
         one_to_many_far_values,
         one_to_many_frr_values,
         one_to_many_roc_auc,
-        one_to_many_impostor_distances,
-        one_to_many_genuine_distances,
         one_to_many_eer_threshold,
         one_to_many_eer,
+        one_to_many_impostor_distances,
+        one_to_many_genuine_distances,
     )
+
+    # Plot results
+    plot_results(thresholds, one_to_one_metrics, one_to_many_metrics)
 
 
 if __name__ == "__main__":

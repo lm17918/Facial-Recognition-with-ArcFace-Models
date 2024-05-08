@@ -25,7 +25,7 @@ def dataset_setup(data_dir, model, device):
     preprocessed_data = []
     i = 0
     for image, label in tqdm.tqdm(test_dataset):
-        if i > 400:
+        if i > 200:
             break
         i += 1
         preprocessed_image = _extract_features(image, model, device)
@@ -187,3 +187,67 @@ def one_to_one_comparison(test_dataloader):
                     impostor_distances.append(similarity.item())
 
     return genuine_distances, impostor_distances
+
+
+class Metrics:
+    def __init__(
+        self,
+        far_values,
+        frr_values,
+        roc_auc,
+        eer_threshold,
+        eer,
+        impostor_distances,
+        genuine_distances,
+    ):
+        self.far_values = far_values
+        self.frr_values = frr_values
+        self.roc_auc = roc_auc
+        self.eer_threshold = eer_threshold
+        self.eer = eer
+        self.impostor_distances = impostor_distances
+        self.genuine_distances = genuine_distances
+
+
+class OneToOneMetrics(Metrics):
+    def __init__(
+        self,
+        far_values,
+        frr_values,
+        roc_auc,
+        eer_threshold,
+        eer,
+        impostor_distances,
+        genuine_distances,
+    ):
+        super().__init__(
+            far_values,
+            frr_values,
+            roc_auc,
+            eer_threshold,
+            eer,
+            impostor_distances,
+            genuine_distances,
+        )
+
+
+class OneToManyMetrics(Metrics):
+    def __init__(
+        self,
+        far_values,
+        frr_values,
+        roc_auc,
+        eer_threshold,
+        eer,
+        impostor_distances,
+        genuine_distances,
+    ):
+        super().__init__(
+            far_values,
+            frr_values,
+            roc_auc,
+            eer_threshold,
+            eer,
+            impostor_distances,
+            genuine_distances,
+        )
