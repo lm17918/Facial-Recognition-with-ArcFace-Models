@@ -23,7 +23,9 @@ def main(cfg):
     model.eval()
 
     # Prepare test dataset and dataloader
-    test_dataloader = dataset_setup(cfg.data_dir, model, device)
+    test_dataloader = dataset_setup(
+        cfg.data_dir, model=model, device=device, train=False
+    )
 
     # Perform one-to-many comparison
     one_to_many_genuine_distances, one_to_many_impostor_distances = (

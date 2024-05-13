@@ -8,23 +8,23 @@ from collections import defaultdict
 import tqdm
 
 
-def dataset_setup(data_dir, model, device):
+def dataset_setup(data_dir, model=None, device=None, train=True):
     # Define transforms for test dataset
-    transforms_test = transforms.Compose(
+    data_transforms = transforms.Compose(
         [
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
-
-    # Load test dataset
-    test_dataset = datasets.ImageFolder(data_dir, transforms_test)
+    dataset = datasets.ImageFolder(data_dir, data_transforms)
+    if train:
+        return torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)
 
     # Create a new dataset with preprocessed images
     preprocessed_data = []
     i = 0
-    for image, label in tqdm.tqdm(test_dataset):
+    for image, label in tqdm.tqdm(dataset):
         if i > 200:
             break
         i += 1
@@ -32,11 +32,7 @@ def dataset_setup(data_dir, model, device):
         preprocessed_data.append((preprocessed_image, label))
 
     # Create a DataLoader for the preprocessed dataset
-    test_dataloader = torch.utils.data.DataLoader(
-        preprocessed_data, batch_size=1, shuffle=False
-    )
-
-    return test_dataloader
+    return torch.utils.data.DataLoader(preprocessed_data, batch_size=1, shuffle=False)
 
 
 def model_setup(device, save_path):
