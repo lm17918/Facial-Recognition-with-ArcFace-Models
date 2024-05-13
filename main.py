@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-
+import hydra
 from utils.utils import (
     calculate_metrics,
     dataset_setup,
@@ -13,22 +13,17 @@ from utils.utils import (
 from utils.utils_plots import plot_results
 
 
-def main():
+@hydra.main(version_base="1.1", config_path="config", config_name="config")
+def main(cfg):
     # Check for GPU availability
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # Paths and directories
-    data_dir = "./data/identity_dataset/test"
-    save_path = (
-        "./weights/facial_identity_classification_transfer_learning_with_ResNet18.pth"
-    )
-
     # Load model
-    model = model_setup(device, save_path)
+    model = model_setup(device, cfg.save_path)
     model.eval()
 
     # Prepare test dataset and dataloader
-    test_dataloader = dataset_setup(data_dir, model, device)
+    test_dataloader = dataset_setup(cfg.data_dir, model, device)
 
     # Perform one-to-many comparison
     one_to_many_genuine_distances, one_to_many_impostor_distances = (
