@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import tqdm
 
-from utils.network import ArcFaceLoss, ResNetArcFace
+from utils.network import ArcFaceLoss, ResNetArcFace, ResNetDreamArcFace
 from utils.utils import dataset_setup
 
 
@@ -14,6 +14,9 @@ def main(cfg):
     model = ResNetArcFace(
         embedding_size=cfg.embedding_size, num_classes=cfg.num_classes
     )
+    # model = ResNetDreamArcFace(
+    #     embedding_size=cfg.embedding_size, num_classes=cfg.num_classes
+    # )
 
     # Define optimizer and ArcFace loss criterion
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
