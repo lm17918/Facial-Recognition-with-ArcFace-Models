@@ -1,19 +1,20 @@
+import hydra
 import numpy as np
 import torch
-import hydra
+
 from utils.utils import (
+    OneToManyMetrics,
+    OneToOneMetrics,
     calculate_metrics,
     dataset_setup,
     model_setup,
     one_to_many_comparison,
     one_to_one_comparison,
-    OneToOneMetrics,
-    OneToManyMetrics,
 )
 from utils.utils_plots import plot_results
 
 
-@hydra.main(version_base="1.1", config_path="config", config_name="config")
+@hydra.main(version_base="1.1", config_path="config", config_name="config_test")
 def main(cfg):
     # Check for GPU availability
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

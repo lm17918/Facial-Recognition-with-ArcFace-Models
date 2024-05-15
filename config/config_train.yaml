@@ -1,0 +1,9 @@
+work_dir: ${hydra:runtime.cwd}
+
+
+num_classes: 307
+embedding_size: 128
+num_epochs: 1
+
+data_dir: "${work_dir}/data/identity_dataset/test"
+save_path: "${work_dir}/weights"
