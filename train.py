@@ -10,6 +10,7 @@ from utils.utils import dataset_setup
 
 @hydra.main(version_base="1.1", config_path="config", config_name="config_train")
 def main(cfg):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Initialize model
     model = ResNetArcFace(
         embedding_size=cfg.embedding_size, num_classes=cfg.num_classes
@@ -17,14 +18,14 @@ def main(cfg):
     # model = ResNetDreamArcFace(
     #     embedding_size=cfg.embedding_size, num_classes=cfg.num_classes
     # )
-
+    model.to(device)
     # Define optimizer and ArcFace loss criterion
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
     criterion = ArcFaceLoss(
         embedding_size=cfg.embedding_size, num_classes=cfg.num_classes
-    )
+    ).to(device) 
 
-    train_loader = dataset_setup(cfg.data_dir)
+    train_loader = dataset_setup(cfg.data_dir,device=device)
 
     # Training loop
     for epoch in tqdm.tqdm(range(cfg.num_epochs)):
@@ -32,6 +33,8 @@ def main(cfg):
         running_loss = 0.0
 
         for images, labels in tqdm.tqdm(train_loader):
+            images, labels = images.to(device), labels.to(device)
+
             optimizer.zero_grad()
             embeddings = model(images)
             logits = criterion(embeddings, labels)  # Compute ArcFace logits
