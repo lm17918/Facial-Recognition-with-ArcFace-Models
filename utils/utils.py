@@ -17,6 +17,7 @@ def dataset_setup(data_dir, model=None, device=None, train=True):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
+
     dataset = datasets.ImageFolder(data_dir, data_transforms)
     if train:
         return torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False)

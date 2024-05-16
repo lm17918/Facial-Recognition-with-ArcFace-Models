@@ -30,7 +30,7 @@ class ArcFaceLoss(nn.Module):
 class ResNetArcFace(nn.Module):
     def __init__(self, embedding_size, num_classes):
         super(ResNetArcFace, self).__init__()
-        self.resnet = models.resnet18(pretrained=True)
+        self.resnet = models.resnet18(pretrained=False)
         self.resnet.fc = nn.Linear(self.resnet.fc.in_features, embedding_size)
         self.arcface = ArcFaceLoss(embedding_size, num_classes)
 
@@ -84,11 +84,12 @@ class DREAMModule(nn.Module):
 
 class ResNetWithDREAM(nn.Module):
     def __init__(
-        self, base_model, embedding_dim, num_angles=20
+        self, embedding_dim, num_angles=20
     ):  # Match num_angles with DREAM module
         super(ResNetWithDREAM, self).__init__()
-        self.base_model = base_model
-        # self.base_model.fc = nn.Identity()  # Remove the original fully connected layer
+        self.base_model = models.resnet18(pretrained=False)
+        self.base_model.fc = nn.Linear(self.base_model.fc.in_features, embedding_dim)
+
         self.dream = DREAMModule(embedding_dim, num_angles)
 
     def forward(self, x):
@@ -100,14 +101,8 @@ class ResNetWithDREAM(nn.Module):
 class ResNetDreamArcFace(nn.Module):
     def __init__(self, embedding_size, num_classes):
         super(ResNetDreamArcFace, self).__init__()
-        resnet = models.resnet18(pretrained=True)
-        # embedding_dim = self.model.fc.in_features  # Typically 2048 for ResNet-50
-        resnet.fc = nn.Linear(resnet.fc.in_features, embedding_size)
         # Create the model with DREAM
-        self.model = ResNetWithDREAM(resnet, embedding_size)
-
-        # resnet.fc = nn.Linear(resnet.fc.in_features, embedding_size)
-
+        self.model = ResNetWithDREAM( embedding_size)
         self.arcface = ArcFaceLoss(embedding_size, num_classes)
 
     def forward(self, x):

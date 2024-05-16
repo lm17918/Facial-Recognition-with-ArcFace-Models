@@ -1,4 +1,4 @@
 work_dir: ${hydra:runtime.cwd}
 
 data_dir: "${work_dir}/data/identity_dataset/test"
-save_path: "${work_dir}/weights/facial_identity_classification_transfer_learning_with_ResNet18.pth"
+save_path: "${work_dir}/weights"

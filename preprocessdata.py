@@ -23,7 +23,7 @@ def main():
     print(f"There are {len(identities.keys())} images.")
 
     # Setting up source and target directories
-    source_root = "./CelebAMask-HQ/CelebA-HQ-img/"
+    source_root = "/mnt/ssd/projects/lorenzom/data/CelebAMask-HQ/CelebA-HQ-img/"
     target_root = "./identity_dataset/"
 
     # Creating target directories based on identities
